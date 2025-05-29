@@ -1,6 +1,3 @@
-# Copyright (c) HashiCorp, Inc.
-# SPDX-License-Identifier: MIT
-
 provider "aws" {
   region = var.region
 
@@ -25,28 +22,46 @@ resource "aws_s3_bucket" "app" {
 
 resource "aws_s3_bucket_ownership_controls" "app" {
   bucket = aws_s3_bucket.app.id
+
   rule {
-    object_ownership = "BucketOwnerPreferred"
+    object_ownership = "BucketOwnerEnforced" # Enforces ownership and disables ACLs
   }
 }
 
 resource "aws_s3_bucket_public_access_block" "app" {
   bucket = aws_s3_bucket.app.id
 
-  block_public_acls       = false
+  block_public_acls       = true
   block_public_policy     = false
-  ignore_public_acls      = false
+  ignore_public_acls      = true
   restrict_public_buckets = false
 }
 
-resource "aws_s3_bucket_acl" "app" {
-  depends_on = [
-    aws_s3_bucket_ownership_controls.app,
-    aws_s3_bucket_public_access_block.app,
-  ]
+# REMOVE THIS BLOCK - ACLs are not supported with "BucketOwnerEnforced"
+# resource "aws_s3_bucket_acl" "app" {
+#   depends_on = [
+#     aws_s3_bucket_ownership_controls.app,
+#     aws_s3_bucket_public_access_block.app,
+#   ]
+#   bucket = aws_s3_bucket.app.id
+#   acl    = "public-read"
+# }
 
+resource "aws_s3_bucket_policy" "public_read" {
   bucket = aws_s3_bucket.app.id
-  acl    = "public-read"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid       = "PublicReadGetObject",
+        Effect    = "Allow",
+        Principal = "*",
+        Action    = "s3:GetObject",
+        Resource  = "${aws_s3_bucket.app.arn}/*"
+      }
+    ]
+  })
 }
 
 resource "aws_s3_bucket_website_configuration" "app" {
@@ -62,9 +77,9 @@ resource "aws_s3_bucket_website_configuration" "app" {
 }
 
 resource "aws_s3_object" "app" {
-  acl          = "public-read"
   key          = "index.html"
   bucket       = aws_s3_bucket.app.id
   content      = file("./assets/index.html")
   content_type = "text/html"
+  # REMOVED: acl = "public-read"
 }
