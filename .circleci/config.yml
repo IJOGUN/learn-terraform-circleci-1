@@ -1,8 +1,4 @@
-# Copyright (c) HashiCorp, Inc.
-# SPDX-License-Identifier: MIT
-
-version: 2
-
+version: 2.1
 jobs:
   plan-apply:
     working_directory: /tmp/project
@@ -19,7 +15,6 @@ jobs:
           root: .
           paths:
             - .
-
   apply:
     docker:
       - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
@@ -34,7 +29,6 @@ jobs:
           root: .
           paths:
             - .
-
   plan-destroy:
     docker:
       - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
@@ -49,7 +43,6 @@ jobs:
           root: .
           paths:
             - .
-
   destroy:
     docker:
       - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
